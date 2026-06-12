@@ -111,8 +111,9 @@ async function worksForArtist(qid) {
       title: label,
       year: b.inception ? Number(b.inception.value.slice(0, b.inception.value.startsWith('-') ? 5 : 4)) : null,
       file: fileName,
-      image: commonsThumb(fileName, 1280),
-      thumb: commonsThumb(fileName, 480),
+      // Wikimedia only serves bucketed thumb widths (250/330/500/960...) — others return HTTP 400.
+      image: commonsThumb(fileName, 960),
+      thumb: commonsThumb(fileName, 500),
     });
     if (works.length >= 8) break;
   }

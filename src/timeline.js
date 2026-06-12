@@ -20,7 +20,8 @@ export class TimelineScene {
     this.scene.fog = new THREE.FogExp2(0x0b0a12, 0.0055);
     this.scene.background = new THREE.Color(0x0b0a12);
 
-    this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
+    // Tight near/far keeps depth-buffer precision high (no z-fighting shimmer on the cards).
+    this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 450);
     this.camera.position.set(SPACING / 2, 7.5, 40); // open on the first period
     this.targetX = SPACING / 2; // where the camera wants to be on the spine
     this.velocity = 0;
@@ -34,7 +35,7 @@ export class TimelineScene {
 
     this.texLoader = new THREE.TextureLoader();
     this.texLoader.setCrossOrigin('anonymous');
-    this.portraitCache = new Map();
+    this.textureCache = new Map();
 
     this.#buildLights();
     this.#buildStars();
@@ -115,17 +116,33 @@ export class TimelineScene {
     pediment.position.y = 14.7;
     g.add(pediment);
 
-    // Glowing veil between the columns — this is what you click.
-    const veil = new THREE.Mesh(
-      new THREE.PlaneGeometry(9.2, 12.4),
-      new THREE.MeshBasicMaterial({
-        color, transparent: true, opacity: 0.34, side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending, depthWrite: false,
-      })
-    );
+    // Between the columns hangs the period's most famous painting — this is what you click.
+    // Starts as a glowing color veil and dissolves into the artwork once it loads.
+    const veilMat = new THREE.MeshBasicMaterial({
+      color: color.clone(), transparent: true, opacity: 0.34, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const veil = new THREE.Mesh(new THREE.PlaneGeometry(9.2, 12.4), veilMat);
     veil.position.y = 5.6;
     veil.userData = { periodId: period.id, kind: 'portal' };
     g.add(veil);
+
+    const hero = period.artists.find((a) => a.works.length)?.works[0];
+    if (hero) {
+      this.#texture(hero.thumb, (tex) => {
+        // cover-crop the painting to the portal's aspect
+        const va = 9.2 / 12.4;
+        const ta = tex.image.width / tex.image.height;
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+        if (ta > va) { tex.repeat.set(va / ta, 1); tex.offset.set((1 - va / ta) / 2, 0); }
+        else { tex.repeat.set(1, ta / va); tex.offset.set(0, (1 - ta / va) / 2); }
+        veilMat.map = tex;
+        veilMat.blending = THREE.NormalBlending;
+        veilMat.opacity = 1;
+        veilMat.color.set(0xd8d2c6); // slightly dimmed, lit by its own halo
+        veilMat.needsUpdate = true;
+      });
+    }
 
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
       map: glowSpriteTexture(), color, transparent: true, opacity: 0.5,
@@ -259,23 +276,36 @@ export class TimelineScene {
     this.cb.onPeriodFocused(null);
   }
 
+  /**
+   * Shared, cached texture loader. Never rewrite Commons thumb URLs to a larger
+   * width — Wikimedia returns HTTP 400 when the requested thumb exceeds the
+   * original file's size, which is exactly how small portraits break.
+   */
+  #texture(url, onReady) {
+    let entry = this.textureCache.get(url);
+    if (!entry) {
+      entry = { tex: null, ready: false, cbs: [] };
+      this.textureCache.set(url, entry);
+      entry.tex = this.texLoader.load(url, () => {
+        entry.ready = true;
+        for (const cb of entry.cbs) cb(entry.tex);
+        entry.cbs = [];
+      });
+      entry.tex.colorSpace = THREE.SRGBColorSpace;
+      entry.tex.anisotropy = 8;
+    }
+    if (onReady) entry.ready ? onReady(entry.tex) : entry.cbs.push(onReady);
+    return entry.tex;
+  }
+
   #portraitMaterial(artist) {
     const mat = new THREE.MeshStandardMaterial({ color: 0x2a2433, roughness: 0.85 });
     if (artist.portrait) {
-      const url = artist.portrait.replace(/\/(\d+)px-/, '/512px-');
-      if (this.portraitCache.has(url)) {
-        mat.map = this.portraitCache.get(url);
+      this.#texture(artist.portrait, (tex) => {
+        mat.map = tex;
         mat.color.set(0xffffff);
         mat.needsUpdate = true;
-      } else {
-        this.texLoader.load(url, (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          this.portraitCache.set(url, tex);
-          mat.map = tex;
-          mat.color.set(0xffffff);
-          mat.needsUpdate = true;
-        });
-      }
+      });
     }
     return mat;
   }
@@ -297,7 +327,7 @@ export class TimelineScene {
       card.add(frame);
 
       const portrait = new THREE.Mesh(new THREE.PlaneGeometry(3.05, 3.5), this.#portraitMaterial(artist));
-      portrait.position.set(0, 0.28, 0.1);
+      portrait.position.set(0, 0.28, 0.14); // clear of the frame face — avoids z-fighting
       portrait.userData = { kind: 'artist', artist };
       card.add(portrait);
       this.artistCards.push(portrait);
@@ -310,7 +340,7 @@ export class TimelineScene {
           transparent: false,
         })
       );
-      name.position.set(0, -1.72, 0.1);
+      name.position.set(0, -1.72, 0.17);
       card.add(name);
 
       card.userData.baseY = card.position.y;
