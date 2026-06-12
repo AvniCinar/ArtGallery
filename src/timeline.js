@@ -21,9 +21,8 @@ export class TimelineScene {
     this.scene.background = new THREE.Color(0x0b0a12);
 
     this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
-    this.camera.position.set(0, 7.5, 40);
-
-    this.targetX = 0;          // where the camera wants to be on the spine
+    this.camera.position.set(SPACING / 2, 7.5, 40); // open on the first period
+    this.targetX = SPACING / 2; // where the camera wants to be on the spine
     this.velocity = 0;
     this.focused = null;       // period currently zoomed into
     this.artistGroup = null;
