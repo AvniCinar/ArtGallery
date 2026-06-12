@@ -1,0 +1,21 @@
+{
+  "name": "art-gallery",
+  "version": "1.0.0",
+  "description": "Interactive 3D art museum of art history — timeline, artists, walkable galleries. Data from Wikipedia/Wikimedia Commons, stored in Neon Postgres.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "ingest": "node scripts/ingest.mjs",
+    "ingest:db": "node scripts/ingest.mjs --to-db"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "gsap": "^3.12.5",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8"
+  }
+}

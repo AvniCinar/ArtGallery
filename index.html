@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Musée Infini — A 3D Museum of Art History</title>
+  <meta name="description" content="An interactive 3D museum of art history. Travel an infinite timeline of art periods, meet the masters, and walk through galleries of their paintings. Data from Wikipedia & Wikimedia Commons." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Loading screen -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-logo">🏛️</div>
+      <h1>Musée&nbsp;Infini</h1>
+      <p class="loader-sub">A 3D museum of art history</p>
+      <div class="loader-bar"><div id="loader-fill"></div></div>
+      <p id="loader-status">Gathering the collection…</p>
+    </div>
+  </div>
+
+  <!-- Top HUD -->
+  <header id="hud" class="hidden">
+    <div class="hud-left">
+      <span class="hud-logo">🏛️ Musée Infini</span>
+      <span id="hud-era"></span>
+    </div>
+    <div class="hud-right">
+      <button id="btn-back" class="hud-btn hidden">← Back</button>
+      <button id="btn-help" class="hud-btn">?</button>
+    </div>
+  </header>
+
+  <!-- Timeline era strip -->
+  <nav id="era-strip" class="hidden"></nav>
+
+  <!-- Artist placard -->
+  <aside id="placard" class="hidden">
+    <button id="placard-close" aria-label="Close">×</button>
+    <div class="placard-frame">
+      <img id="placard-portrait" alt="" crossorigin="anonymous" />
+    </div>
+    <h2 id="placard-name"></h2>
+    <p id="placard-dates"></p>
+    <p id="placard-desc"></p>
+    <p id="placard-bio"></p>
+    <div class="placard-actions">
+      <button id="btn-enter-gallery" class="btn-primary">Enter Gallery →</button>
+      <a id="placard-wiki" href="#" target="_blank" rel="noopener">Wikipedia ↗</a>
+    </div>
+  </aside>
+
+  <!-- Gallery controls hint -->
+  <div id="gallery-hint" class="hidden">
+    <p><b>Click</b> to look around · <b>W A S D</b> / arrows to walk · <b>Esc</b> to release · Walk close to a painting to read its label</p>
+  </div>
+  <div id="crosshair" class="hidden"></div>
+
+  <!-- Artwork caption (gallery proximity) -->
+  <div id="artwork-caption" class="hidden"></div>
+
+  <!-- Help modal -->
+  <div id="help" class="hidden">
+    <div class="help-card">
+      <button id="help-close" aria-label="Close">×</button>
+      <h2>How to visit</h2>
+      <ul>
+        <li><b>Timeline:</b> drag or scroll to travel through time — it loops forever.</li>
+        <li><b>Periods:</b> click a portal to zoom in and meet its artists.</li>
+        <li><b>Artists:</b> click a portrait to read the museum placard.</li>
+        <li><b>Galleries:</b> enter and walk with <b>WASD</b>, look with the mouse.</li>
+      </ul>
+      <p class="help-credit">All artworks &amp; biographies from Wikipedia / Wikimedia Commons.</p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
